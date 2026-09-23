@@ -3,13 +3,21 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /deliveryProof/{deliveryId}/{fileName} {
-      function canAccessDelivery() {
+      function isActiveOwner() {
         return request.auth != null
-          && (
-            get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'owner'
-            || get(/databases/(default)/documents/users/$(request.auth.uid)).data.active == true
-              && get(/databases/(default)/documents/deliveries/$(deliveryId)).data.driverId == request.auth.uid
-          );
+          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'owner'
+          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.active == true;
+      }
+
+      function isAssignedDriver() {
+        return request.auth != null
+          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'driver'
+          && get(/databases/(default)/documents/users/$(request.auth.uid)).data.active == true
+          && get(/databases/(default)/documents/deliveries/$(deliveryId)).data.driverId == request.auth.uid;
+      }
+
+      function canAccessDelivery() {
+        return isActiveOwner() || isAssignedDriver();
       }
 
       allow read: if canAccessDelivery();
