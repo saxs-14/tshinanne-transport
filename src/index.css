@@ -95,3 +95,20 @@ button, a { font: inherit; }
 .finance-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.finance-stat{background:white;border-radius:16px;padding:16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.finance-stat span{display:block;color:#6b7280;font-size:11px;margin-bottom:7px}.finance-stat strong{display:block;font-size:19px}.finance-stat small{display:block;margin-top:5px;color:#6b7280;font-size:10px}.finance-stat.highlight{border:1px solid #d1d5db}.access-card{text-align:center;display:grid;justify-items:center;gap:8px}.expense-list{display:grid;gap:0;margin-top:10px}.expense-row{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid #f3f4f6}.expense-row>div{display:grid;gap:4px}.expense-row span{color:#6b7280;font-size:11px}@media (min-width:760px){.finance-stats{grid-template-columns:repeat(5,1fr)}}
 
 .maintenance-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.maintenance-truck{background:white;border-radius:16px;padding:16px;display:flex;justify-content:space-between;gap:10px}.maintenance-truck h3{margin:4px 0}.maintenance-alert{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:#fff7ed;margin-bottom:16px}.maintenance-alert p{margin:4px 0 0;color:#6b7280;font-size:12px}.maintenance-list{display:grid}.maintenance-row{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid #f1f5f9}.maintenance-row>div:first-child{display:grid;gap:4px}.maintenance-row span,.maintenance-row small{color:#6b7280;font-size:11px}.maintenance-actions{display:flex;align-items:center;gap:7px}.icon-button.small{width:32px;height:32px}.icon-button.danger{color:#b91c1c}@media(max-width:520px){.maintenance-grid{grid-template-columns:1fr}.maintenance-row{align-items:flex-start}.maintenance-actions{flex-wrap:wrap;justify-content:flex-end}.maintenance-actions>strong{width:100%;text-align:right}}
+
+.dashboard-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.dashboard-grid h3{font-size:24px;margin:5px 0}
+.dashboard-trucks{display:grid;gap:8px;margin-top:10px}
+.dashboard-truck{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #f3f4f6}
+.dashboard-truck>div{display:grid;gap:4px}.dashboard-truck span{color:#6b7280;font-size:11px}
+.bottom-nav{overflow-x:auto;justify-content:flex-start}.bottom-nav a{min-width:76px}
+.report-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:white;padding:16px;border-radius:16px}
+.report-filters label{display:grid;gap:6px;font-size:12px;font-weight:700}
+.report-filters input{width:100%;border:1px solid #d1d5db;border-radius:9px;padding:10px;font:inherit}
+.report-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:16px}
+.bar-list{display:grid;gap:14px;margin-top:12px}.bar-row{display:grid;gap:6px}.bar-row>div:first-child{display:flex;justify-content:space-between;gap:10px}.bar-row span{font-size:11px;color:#6b7280}
+.bar-track{height:9px;border-radius:99px;background:#f3f4f6;overflow:hidden}.bar-track i{display:block;height:100%;background:#111827;border-radius:99px}
+.report-number{display:flex;align-items:center;gap:10px;margin:16px 0 8px}.report-number strong{font-size:24px}
+.truck-report-list{display:grid}.truck-report-row{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-top:1px solid #f3f4f6}.truck-report-row>div{display:grid;gap:4px}.truck-report-row span{font-size:11px;color:#6b7280}
+@media(max-width:700px){.report-grid{grid-template-columns:1fr}.dashboard-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.report-filters{grid-template-columns:1fr}}
