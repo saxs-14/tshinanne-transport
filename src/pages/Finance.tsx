@@ -12,7 +12,7 @@ export default function Finance(){
  const [expenses,setExpenses]=useState<Expense[]>([]),[deliveries,setDeliveries]=useState<Delivery[]>([]),[trucks,setTrucks]=useState<Truck[]>([])
  const [isOwner,setIsOwner]=useState<boolean|null>(null),[open,setOpen]=useState(false),[error,setError]=useState('')
  const [form,setForm]=useState({category:'Fuel',amount:0,description:'',date:new Date().toISOString().slice(0,10),truckId:''})
- useEffect(()=>{async function loadRole(){if(!db||!auth?.currentUser){setIsOwner(false);return}try{const s=await getDocs(query(collection(db,'users')));const me=s.docs.find(d=>d.id===auth.currentUser?.uid);setIsOwner(me?.data().role==='owner'&&me?.data().active===true)}catch{setIsOwner(false)}}loadRole()},[])
+ useEffect(()=>{async function loadRole(){if(!db||!auth?.currentUser){setIsOwner(false);return}try{const s=await getDoc(doc(db,'users',auth.currentUser.uid));setIsOwner(s.exists()&&s.data().role==='owner'&&s.data().active===true)}catch{setIsOwner(false)}}loadRole()},[])
  useEffect(()=>{if(!db||!isOwner)return;const u=[
   onSnapshot(query(collection(db,'expenses'),orderBy('date','desc')),s=>setExpenses(s.docs.map(d=>({id:d.id,...d.data()} as Expense))),()=>setError('Unable to load expenses.')),
   onSnapshot(query(collection(db,'deliveries'),orderBy('orderDate','desc')),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load delivery income.')),
