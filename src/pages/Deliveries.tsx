@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { addDoc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, onSnapshot, query, orderBy, where } from 'firebase/firestore'
 import { ClipboardList, Plus, X, Truck as TruckIcon, MapPin } from 'lucide-react'
-import { db } from '../lib/firebase'
+import { auth, db } from '../lib/firebase'
 type Customer={id:string;name:string;phone?:string;address?:string}
 type TruckRecord={id:string;registrationNumber:string;make:string;model:string;status:'active'|'maintenance'|'inactive'}
 type Driver={id:string;displayName?:string;phone?:string;role?:string;active?:boolean}
@@ -9,8 +9,9 @@ type Delivery={id:string;customerId:string;customerName?:string;truckId:string;t
 const emptyForm={customerId:'',truckId:'',driverId:'',sandType:'Building Sand',quantity:1,quantityUnit:'load',price:0,amountPaid:0,paymentStatus:'unpaid' as Delivery['paymentStatus'],deliveryStatus:'pending' as Delivery['deliveryStatus'],orderDate:new Date().toISOString().slice(0,10),deliveryDate:'',notes:''}
 export default function Deliveries(){
  const[customers,setCustomers]=useState<Customer[]>([]),[trucks,setTrucks]=useState<TruckRecord[]>([]),[drivers,setDrivers]=useState<Driver[]>([]),[deliveries,setDeliveries]=useState<Delivery[]>([])
- const[open,setOpen]=useState(false),[customerOpen,setCustomerOpen]=useState(false),[form,setForm]=useState(emptyForm),[customerForm,setCustomerForm]=useState({name:'',phone:'',address:'',notes:''}),[error,setError]=useState('')
- useEffect(()=>{if(!db)return;const u=[onSnapshot(collection(db,'customers'),s=>setCustomers(s.docs.map(d=>({id:d.id,...d.data()} as Customer))),()=>setError('Unable to load customers.')),onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),onSnapshot(query(collection(db,'users'),where('role','==','driver'),where('active','==',true)),s=>setDrivers(s.docs.map(d=>({id:d.id,...d.data()} as Driver))),()=>setError('Unable to load drivers.')),onSnapshot(query(collection(db,'deliveries'),orderBy('orderDate','desc')),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load deliveries.'))];return()=>u.forEach(x=>x())},[])
+ const[role,setRole]=useState<'owner'|'driver'|null>(null),[open,setOpen]=useState(false),[customerOpen,setCustomerOpen]=useState(false),[form,setForm]=useState(emptyForm),[customerForm,setCustomerForm]=useState({name:'',phone:'',address:'',notes:''}),[error,setError]=useState('')
+ useEffect(()=>{if(!db||!auth.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(s=>setRole(s.exists()?(s.data().role as 'owner'|'driver'):null)).catch(()=>setError('Unable to load your profile.'))},[])
+ useEffect(()=>{if(!db||!role)return;const u=[onSnapshot(collection(db,'customers'),s=>setCustomers(s.docs.map(d=>({id:d.id,...d.data()} as Customer))),()=>setError('Unable to load customers.')),onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),onSnapshot(query(collection(db,'users'),where('role','==','driver'),where('active','==',true)),s=>setDrivers(s.docs.map(d=>({id:d.id,...d.data()} as Driver))),()=>setError('Unable to load drivers.')),onSnapshot(role==='owner'?query(collection(db,'deliveries'),orderBy('orderDate','desc')):query(collection(db,'deliveries'),where('driverId','==',auth.currentUser?.uid||''),orderBy('orderDate','desc')),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load deliveries.'))];return()=>u.forEach(x=>x())},[role])
  const activeTrucks=useMemo(()=>trucks.filter(t=>t.status==='active'),[trucks]);const customer=customers.find(c=>c.id===form.customerId),truck=trucks.find(t=>t.id===form.truckId),driver=drivers.find(d=>d.id===form.driverId)
  function startAdd(){setForm({...emptyForm,customerId:customers[0]?.id??'',truckId:activeTrucks[0]?.id??'',driverId:drivers[0]?.id??''});setError('');setOpen(true)}
  function payment(a:number,p:number):Delivery['paymentStatus']{if(a<=0)return'unpaid';if(a>=p&&p>0)return'paid';return'partial'}
