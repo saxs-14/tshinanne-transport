@@ -17,7 +17,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isOwner());
+      allow read: if signedIn() && (request.auth.uid == userId || isOwner() || (isActiveUser() && resource.data.role == 'driver'));
       allow create: if signedIn() && request.auth.uid == userId;
       allow update: if signedIn() && (request.auth.uid == userId || isOwner());
       allow delete: if isOwner();
