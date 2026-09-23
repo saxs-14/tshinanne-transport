@@ -1,5 +1,11 @@
-import { NavLink, Route, Routes } from 'react-router-dom'
-import { BarChart3, ClipboardList, Fuel, LayoutDashboard, Settings, Truck, Users, Wrench } from 'lucide-react'
+import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { signOut, type User } from 'firebase/auth'
+import { BarChart3, ClipboardList, Fuel, LayoutDashboard, LogOut, Settings, Truck, Users, Wrench } from 'lucide-react'
+import Login from './pages/Login'
+import ProtectedRoute from './components/ProtectedRoute'
+import { auth } from './lib/firebase'
+
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,17 +18,17 @@ const navItems = [
 ]
 
 function Placeholder({ title, description }: { title: string; description: string }) {
-  return <section className="page-card"><p className="eyebrow">Coming in the next phase</p><h2>{title}</h2><p>{description}</p></section>
+  return <section className="page-card"><p className="eyebrow">Next phase</p><h2>{title}</h2><p>{description}</p></section>
 }
 
-function Dashboard() {
+function Dashboard({ user }: { user: User }) {
   return (
     <div className="dashboard">
       <div className="hero">
         <div>
           <p className="eyebrow">Tshinanne Transport</p>
-          <h2>Good day, Tshinanne 👋</h2>
-          <p className="muted">A simple home for your trucks, deliveries and business money.</p>
+          <h2>Welcome back 👋</h2>
+          <p className="muted">{user.email ?? 'Signed-in user'} — your transport business in one place.</p>
         </div>
         <div className="truck-badge"><Truck size={28} /><span>2 TATA 1518 trucks</span></div>
       </div>
@@ -33,24 +39,28 @@ function Dashboard() {
         <div className="stat"><span>Estimated profit</span><strong>R0.00</strong></div>
       </div>
       <div className="page-card">
-        <p className="eyebrow">Phase 1 foundation</p>
-        <h3>Ready for the real data</h3>
-        <p className="muted">Firebase authentication and Firestore records will be connected in Phase 2. No financial values are hard-coded as business records.</p>
+        <p className="eyebrow">Authentication</p>
+        <h3>You are signed in</h3>
+        <p className="muted">Your account is now the entry point to the protected business system. Real truck and financial records come in the next phases.</p>
       </div>
     </div>
   )
 }
 
-export default function App() {
+function AppShell({ user }: { user: User }) {
+  async function handleLogout() {
+    if (auth) await signOut(auth)
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand"><div className="brand-mark"><Truck size={21} /></div><div><strong>Tshinanne Transport</strong><span>Fleet Manager</span></div></div>
-        <button className="icon-button" aria-label="Settings"><Settings size={20} /></button>
+        <button className="icon-button" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut size={20} /></button>
       </header>
       <main className="content">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard user={user} />} />
           <Route path="/trucks" element={<Placeholder title="Truck Management" description="Manage the two TATA 1518 trucks, drivers, odometers and status." />} />
           <Route path="/deliveries" element={<Placeholder title="Deliveries" description="Record customer orders, assignments, delivery status and payments." />} />
           <Route path="/customers" element={<Placeholder title="Customers" description="Keep customer contact details and delivery history in one place." />} />
@@ -65,5 +75,28 @@ export default function App() {
         ))}
       </nav>
     </div>
+  )
+}
+
+export default function App() {
+  const [user, setUser] = useState<User | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!auth) {
+      setUser(null)
+      return
+    }
+    return auth.onAuthStateChanged(setUser)
+  }, [])
+
+  if (user === undefined) return <main className="auth-page"><p className="muted">Loading secure session…</p></main>
+
+  return (
+    <Routes>
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route element={<ProtectedRoute user={user} />}>
+        <Route path="/*" element={<AppShell user={user} />} />
+      </Route>
+    </Routes>
   )
 }
