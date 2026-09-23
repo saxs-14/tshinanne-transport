@@ -48,7 +48,7 @@ function Dashboard({user}:{user:User}){
  const today=localDate()
  const todayDeliveries=deliveries.filter(d=>d.orderDate===today)
  const revenue=todayDeliveries.reduce((s,d)=>s+Math.max(0,Number(d.price)||0),0)
- const expensesToday=expenses.filter(e=>e.date===today).reduce((s,e)=>s+Math.max(0,Number(e.amount)||0),0)
+ const expensesToday=expenses.filter(e=>e.date===today).reduce((s,e)=>s+(e.category==='Fuel'?0:Math.max(0,Number(e.amount)||0)),0)
  const fuelToday=fuel.filter(f=>f.date===today).reduce((s,f)=>s+Math.max(0,Number(f.amount)||0),0)
  const due=maintenance.filter(m=>{const truck=trucks.find(t=>t.id===m.truckId);return !!((m.nextDueDate&&m.nextDueDate<=today)||(m.nextDueOdometer!==undefined&&truck&&Number(truck.currentOdometer||0)>=Number(m.nextDueOdometer)))})
  const outstanding=deliveries.reduce((s,d)=>s+Math.max(0,(Number(d.price)||0)-(Number(d.amountPaid)||0)),0)
