@@ -89,7 +89,10 @@ service cloud.firestore {
     }
 
     match /maintenanceRecords/{recordId} {
-      allow read: if isActiveUser();
+      allow read: if isActiveUser() && (
+        isOwner()
+        || resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
+      );
       allow create: if isActiveUser() && (
         isOwner()
         || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
