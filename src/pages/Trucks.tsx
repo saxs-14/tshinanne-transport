@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where, writeBatch } from 'firebase/firestore'
+import { collection, deleteDoc, doc, onSnapshot, query, where, writeBatch } from 'firebase/firestore'
 import { Plus, Truck as TruckIcon, X, Pencil, Trash2 } from 'lucide-react'
 import { db } from '../lib/firebase'
 
