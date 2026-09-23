@@ -35,7 +35,7 @@ service cloud.firestore {
 
     match /deliveries/{deliveryId} {
       allow read: if isActiveUser() && (isOwner() || resource.data.driverId == request.auth.uid);
-      allow create: if isActiveUser() && (isOwner() || (request.resource.data.driverId == request.auth.uid && request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId));
+      allow create: if isActiveUser() && (isOwner() || (request.resource.data.driverId == request.auth.uid && request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId))\n        && (request.resource.data.driverId == null || request.resource.data.driverId == '' || get(/databases/$(database)/documents/trucks/$(request.resource.data.truckId)).data.driverId == request.resource.data.driverId);
       allow update: if isActiveUser()
         && (
           isOwner()
