@@ -69,8 +69,7 @@ service cloud.firestore {
 
     match /expenses/{expenseId} {
       allow read: if isOwner();
-      allow create: if isActiveUser();
-      allow update, delete: if isOwner();
+      allow create, update, delete: if isOwner();
     }
 
     match /fuelRecords/{fuelId} {
