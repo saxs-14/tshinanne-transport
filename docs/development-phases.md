@@ -3,7 +3,6 @@
 ## Phase 1 — Foundation
 - Repository setup
 - React/Vite/TypeScript
-- Tailwind
 - Firebase configuration
 - Environment variables
 - Basic routing
@@ -11,13 +10,11 @@
 
 ## Phase 2 — Authentication
 - Firebase Authentication
-- Owner account
-- Driver account
-- Role-based route protection
+- Owner and driver roles
+- Protected routes
 - Firestore security rules
 
 ## Phase 3 — Fleet
-- Truck list
 - Truck profiles
 - Driver assignment
 - Odometer
@@ -33,9 +30,7 @@
 ## Phase 5 — Finance
 - Income
 - Expenses
-- Fuel
 - Daily totals
-- Monthly totals
 - Estimated profit
 
 ## Phase 6 — Maintenance
@@ -43,25 +38,36 @@
 - Repairs
 - Parts
 - Maintenance reminders
-- Inspection checklist
 
-## Phase 7 — Reporting — Completed\n- Live dashboard totals\n- Date-range reports\n- Truck performance\n- Expenses by category\n- Fuel analytics\n- Customer outstanding balance totals\n\n## Phase 7 — Reporting
-- Truck profitability
-- Revenue by period
+## Phase 7 — Reporting — Completed
+- Live dashboard totals
+- Date-range reports
+- Truck performance
 - Expenses by category
 - Fuel analytics
-- Customer balances
+- Customer outstanding balance totals
 
-## Phase 8 — Operations
+## Phase 8 — Operations — Completed
+- Driver operations screen
+- Daily truck inspection checklist
+- Delivery status workflow
+- Delivery proof photo upload
 - Phone location sharing
-- Delivery proof
-- WhatsApp message generation
-- Offline-friendly workflows
 
-## Phase 9 — Hardening
+## Phase 9 — Hardening — In progress
 - Security review
-- Firestore rules review
-- Validation
+- Firestore and Storage rules review
+- Validation and permission edge cases
 - Error handling
 - Accessibility
 - Mobile QA
+- Production build verification
+- Remove remaining placeholder screens
+
+## Phase 10 — Launch readiness
+- Firebase production configuration
+- Create owner and driver accounts
+- Seed the two TATA 1518 trucks
+- End-to-end testing on phones
+- Backup/export process
+- Deployment
