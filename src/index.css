@@ -54,3 +54,28 @@ button, a { font: inherit; }
 .primary-button { border: 0; border-radius: 11px; padding: 13px; background: #111827; color: white; font-weight: 800; cursor: pointer; }
 .notice { margin-top: 18px; padding: 12px; border-radius: 10px; background: #f3f4f6; color: #4b5563; font-size: 12px; line-height: 1.5; }
 .form-error { margin: 0; color: #b91c1c; font-size: 12px; }
+
+.page-section { display: grid; gap: 16px; }
+.section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.section-heading h2 { margin: 5px 0; font-size: 28px; }
+.compact { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.truck-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.truck-card { background: white; border-radius: 16px; padding: 18px; }
+.truck-card-top { display: flex; justify-content: space-between; align-items: center; }
+.truck-symbol { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 13px; background: #f3f4f6; }
+.truck-card h3 { margin: 4px 0 18px; font-size: 22px; }
+.status { padding: 5px 9px; border-radius: 999px; background: #f3f4f6; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.truck-detail { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #f3f4f6; font-size: 12px; }
+.truck-detail span { color: #6b7280; }
+.card-actions { display: flex; gap: 8px; margin-top: 12px; }
+.card-actions button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e5e7eb; background: white; border-radius: 9px; padding: 8px 10px; font-size: 11px; cursor: pointer; }
+.empty-state { text-align: center; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 18px; background: rgba(17,24,39,.55); }
+.modal { width: min(520px, 100%); max-height: 92vh; overflow-y: auto; display: grid; gap: 14px; background: white; border-radius: 18px; padding: 22px; }
+.modal-heading { display: flex; justify-content: space-between; align-items: flex-start; }
+.modal-heading h3 { margin: 5px 0 0; font-size: 24px; }
+.close-button { border: 0; background: transparent; cursor: pointer; padding: 5px; }
+.modal label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+.modal input, .modal select, .modal textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 9px; padding: 10px; font: inherit; background: white; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .section-heading { flex-direction: column; } .compact { width: 100%; justify-content: center; } .form-row { grid-template-columns: 1fr; } }
