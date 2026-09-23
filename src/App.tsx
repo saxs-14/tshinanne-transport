@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { signOut, type User } from 'firebase/auth'
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore'
 import { BarChart3, ClipboardList, Fuel, LayoutDashboard, LogOut, Truck, Users, Wrench } from 'lucide-react'
 import Login from './pages/Login'
 import Trucks from './pages/Trucks'
@@ -29,7 +29,13 @@ function Dashboard({user}:{user:User}){
  const [isOwner,setIsOwner]=useState(false),[ready,setReady]=useState(false),[error,setError]=useState('')
  useEffect(()=>{let alive=true;async function loadRole(){if(!db||!auth?.currentUser){if(alive)setReady(true);return}try{const snap=await getDoc(doc(db,'users',auth.currentUser.uid));if(alive)setIsOwner(snap.exists()&&snap.data().role==='owner'&&snap.data().active===true)}catch{if(alive)setError('Some dashboard data could not be checked.')}finally{if(alive)setReady(true)}}loadRole();return()=>{alive=false}},[])
  useEffect(()=>{if(!db||!ready)return;const unsubs=[
-  onSnapshot(collection(db,'deliveries'),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load deliveries.')),
+  onSnapshot(
+    isOwner
+      ? collection(db,'deliveries')
+      : query(collection(db,'deliveries'),where('driverId','==',user.uid)),
+    s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),
+    ()=>setError('Unable to load deliveries.')
+  ),
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),
   onSnapshot(collection(db,'maintenanceRecords'),s=>setMaintenance(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord))),()=>setError('Unable to load maintenance warnings.'))
  ]
