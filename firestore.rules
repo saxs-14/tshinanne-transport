@@ -14,8 +14,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isOwner() || (isActiveUser() && resource.data.role == 'driver'));
-      allow create: if signedIn() && request.auth.uid == userId;
-      allow update: if signedIn() && (request.auth.uid == userId || isOwner());
+      // User profiles are provisioned by the owner/admin process, not client-side signup.
+      allow create: if false;
+      allow update: if isOwner()
+        || (signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone']));
       allow delete: if isOwner();
     }
 
@@ -32,7 +36,23 @@ service cloud.firestore {
     match /deliveries/{deliveryId} {
       allow read: if isActiveUser() && (isOwner() || resource.data.driverId == request.auth.uid);
       allow create: if isActiveUser() && (isOwner() || request.resource.data.driverId == request.auth.uid);
-      allow update: if isActiveUser() && (isOwner() || resource.data.driverId == request.auth.uid);
+      allow update: if isActiveUser()
+        && (
+          isOwner()
+          || (
+            resource.data.driverId == request.auth.uid
+            && request.resource.data.driverId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'deliveryStatus',
+              'deliveryDate',
+              'proofUrl',
+              'proofUploadedAt',
+              'proofUploadedBy',
+              'notes',
+              'updatedAt'
+            ])
+          )
+        );
       allow delete: if isOwner();
     }
 
@@ -43,22 +63,29 @@ service cloud.firestore {
     }
 
     match /fuelRecords/{fuelId} {
-      allow read: if isActiveUser() && (isOwner() || resource.data.createdBy == request.auth.uid || resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
-      allow create: if isActiveUser() && (isOwner() || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
+      allow read: if isActiveUser() && (isOwner()
+        || resource.data.createdBy == request.auth.uid
+        || resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
+      allow create: if isActiveUser() && (isOwner()
+        || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
       allow update, delete: if isOwner();
     }
 
     match /maintenanceRecords/{recordId} {
       allow read: if isActiveUser();
-      allow create: if isActiveUser() && (isOwner() || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
+      allow create: if isActiveUser() && (isOwner()
+        || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId);
       allow update, delete: if isOwner();
     }
+
     match /inspections/{inspectionId} {
       allow read: if isActiveUser() && (isOwner() || resource.data.driverId == request.auth.uid);
       allow create: if isActiveUser() && request.resource.data.driverId == request.auth.uid;
-      allow update: if isOwner() || (isActiveUser() && resource.data.driverId == request.auth.uid);
+      allow update: if isOwner()
+        || (isActiveUser()
+          && resource.data.driverId == request.auth.uid
+          && request.resource.data.driverId == request.auth.uid);
       allow delete: if isOwner();
     }
-
   }
 }
