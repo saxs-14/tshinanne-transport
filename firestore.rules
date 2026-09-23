@@ -2,18 +2,12 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
+    function signedIn() { return request.auth != null; }
     function isOwner() {
-      return signedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
     }
-
     function isActiveUser() {
-      return signedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
     }
 
     match /users/{userId} {
@@ -29,14 +23,12 @@ service cloud.firestore {
     }
 
     match /customers/{customerId} {
-      allow read: if isActiveUser();
-      allow create, update: if isActiveUser();
+      allow read, create, update: if isActiveUser();
       allow delete: if isOwner();
     }
 
     match /deliveries/{deliveryId} {
-      allow read: if isActiveUser();
-      allow create, update: if isActiveUser();
+      allow read, create, update: if isActiveUser();
       allow delete: if isOwner();
     }
 
@@ -47,14 +39,12 @@ service cloud.firestore {
     }
 
     match /fuelRecords/{fuelId} {
-      allow read: if isActiveUser();
-      allow create: if isActiveUser();
+      allow read, create: if isActiveUser();
       allow update, delete: if isOwner();
     }
 
     match /maintenanceRecords/{recordId} {
-      allow read: if isActiveUser();
-      allow create: if isActiveUser();
+      allow read, create: if isActiveUser();
       allow update, delete: if isOwner();
     }
   }
