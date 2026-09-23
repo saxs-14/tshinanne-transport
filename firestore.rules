@@ -92,7 +92,10 @@ service cloud.firestore {
         && request.resource.data.date != ''
         && (
           isOwner()
-          || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
+          || (
+            request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
+            && request.resource.data.odometer >= get(/databases/$(database)/documents/trucks/$(request.resource.data.truckId)).data.currentOdometer
+          )
         );
       allow update, delete: if isOwner();
     }
