@@ -116,6 +116,10 @@ export default function Trucks() {
       setError('Select an active driver from the list.')
       return
     }
+    if (trucks.some(t => t.id !== editing && t.registrationNumber.trim().toUpperCase() === registrationNumber)) {
+      setError('That registration number is already recorded for another truck.')
+      return
+    }
     if (form.driverId && trucks.some(t => t.id !== editing && t.driverId === form.driverId)) {
       setError('That driver is already assigned to another truck.')
       return
