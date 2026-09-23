@@ -7,14 +7,15 @@ import Login from './pages/Login'
 import Trucks from './pages/Trucks'
 import Deliveries from './pages/Deliveries'
 import Finance from './pages/Finance'
-import Maintenance from './pages/Maintenance'\nimport Operations from './pages/Operations'
+import Maintenance from './pages/Maintenance'
+import Operations from './pages/Operations'
+import Customers from './pages/Customers'
+import FuelPage from './pages/Fuel'
 import Reports from './pages/Reports'
 import ProtectedRoute from './components/ProtectedRoute'
 import { auth, db } from './lib/firebase'
 
 const navItems=[{to:'/',label:'Dashboard',icon:LayoutDashboard},{to:'/trucks',label:'Trucks',icon:Truck},{to:'/deliveries',label:'Deliveries',icon:ClipboardList},{to:'/customers',label:'Customers',icon:Users},{to:'/finance',label:'Finance',icon:BarChart3},{to:'/reports',label:'Reports',icon:BarChart3},{to:'/fuel',label:'Fuel',icon:Fuel},{to:'/maintenance',label:'Maintenance',icon:Wrench},{to:'/operations',label:'Operations',icon:ClipboardList}]
-function Placeholder({title,description}:{title:string;description:string}){return <section className="page-card"><p className="eyebrow">Next phase</p><h2>{title}</h2><p>{description}</p></section>}
-
 type Delivery={id:string;price?:number;amountPaid?:number;orderDate?:string;deliveryStatus?:string}
 type Expense={id:string;amount?:number;date?:string}
 type TruckRecord={id:string;registrationNumber?:string;make?:string;model?:string;status?:string;currentOdometer?:number}
@@ -50,5 +51,5 @@ function Dashboard({user}:{user:User}){
  </div>
 }
 
-function AppShell({user}:{user:User}){async function handleLogout(){if(auth)await signOut(auth)}return <div className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark"><Truck size={21}/></div><div><strong>Tshinanne Transport</strong><span>Fleet Manager</span></div></div><button className="icon-button" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut size={20}/></button></header><main className="content"><Routes><Route path="/" element={<Dashboard user={user}/>}/><Route path="/trucks" element={<Trucks/>}/><Route path="/deliveries" element={<Deliveries/>}/><Route path="/customers" element={<Placeholder title="Customers" description="Keep customer contact details and delivery history in one place."/>}/><Route path="/finance" element={<Finance/>}/><Route path="/reports" element={<Reports/>}/><Route path="/fuel" element={<Placeholder title="Fuel" description="Record litres, fuel costs, stations and odometer readings."/>}/><Route path="/maintenance" element={<Maintenance/>}/><Route path="/operations" element={<Operations/>}/></Routes></main><nav className="bottom-nav" aria-label="Main navigation">{navItems.map(({to,label,icon:Icon})=><NavLink key={to} to={to} end={to==='/' }><Icon size={19}/><span>{label}</span></NavLink>)}</nav></div>}
+function AppShell({user}:{user:User}){async function handleLogout(){if(auth)await signOut(auth)}return <div className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark"><Truck size={21}/></div><div><strong>Tshinanne Transport</strong><span>Fleet Manager</span></div></div><button className="icon-button" onClick={handleLogout} aria-label="Sign out" title="Sign out"><LogOut size={20}/></button></header><main className="content"><Routes><Route path="/" element={<Dashboard user={user}/>}/><Route path="/trucks" element={<Trucks/>}/><Route path="/deliveries" element={<Deliveries/>}/><Route path="/customers" element={<Customers/>}/><Route path="/finance" element={<Finance/>}/><Route path="/reports" element={<Reports/>}/><Route path="/fuel" element={<FuelPage/>}/><Route path="/maintenance" element={<Maintenance/>}/><Route path="/operations" element={<Operations/>}/></Routes></main><nav className="bottom-nav" aria-label="Main navigation">{navItems.map(({to,label,icon:Icon})=><NavLink key={to} to={to} end={to==='/' }><Icon size={19}/><span>{label}</span></NavLink>)}</nav></div>}
 export default function App(){const[user,setUser]=useState<User|null|undefined>(undefined);useEffect(()=>{if(!auth){setUser(null);return}return auth.onAuthStateChanged(setUser)},[]);if(user===undefined)return <main className="auth-page"><p className="muted">Loading secure session…</p></main>;return <Routes><Route path="/login" element={user?<Navigate to="/" replace/>:<Login/>}/><Route element={<ProtectedRoute user={user}/>}><Route path="/*" element={<AppShell user={user}/>} /></Route></Routes>}
