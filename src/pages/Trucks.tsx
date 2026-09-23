@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, updateDoc, where, writeBatch } from 'firebase/firestore'
 import { Plus, Truck as TruckIcon, X, Pencil, Trash2 } from 'lucide-react'
 import { db } from '../lib/firebase'
 
-type TruckRecord = {
+type DriverRecord = { id: string; displayName?: string; phone?: string; role?: string; active?: boolean }\n\ntype TruckRecord = {
   id: string
   registrationNumber: string
   make: string
@@ -17,7 +17,7 @@ type TruckRecord = {
 const emptyTruck = { registrationNumber: '', make: 'TATA', model: '1518', driverId: '', status: 'active' as const, currentOdometer: 0, notes: '' }
 
 export default function Trucks() {
-  const [trucks, setTrucks] = useState<TruckRecord[]>([])
+  const [trucks, setTrucks] = useState<TruckRecord[]>([])\n  const [drivers, setDrivers] = useState<DriverRecord[]>([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState(emptyTruck)
@@ -25,7 +25,7 @@ export default function Trucks() {
 
   useEffect(() => {
     if (!db) return
-    return onSnapshot(collection(db, 'trucks'), snapshot => {
+    const unsubscribe = onSnapshot(collection(db, 'trucks'), snapshot => {
       setTrucks(snapshot.docs.map(d => ({ id: d.id, ...(d.data() as Omit<TruckRecord, 'id'>) })))
     }, () => setError('Unable to load truck records. Check your Firebase configuration and rules.'))
   }, [])
@@ -70,7 +70,7 @@ export default function Trucks() {
         <div className="form-row"><label>Make<input value={form.make} onChange={e => setForm({...form, make:e.target.value})} required /></label><label>Model<input value={form.model} onChange={e => setForm({...form, model:e.target.value})} required /></label></div>
         <label>Current odometer (km)<input type="number" min="0" value={form.currentOdometer} onChange={e => setForm({...form, currentOdometer:Number(e.target.value)})} /></label>
         <label>Status<select value={form.status} onChange={e => setForm({...form, status:e.target.value as TruckRecord['status']})}><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></label>
-        <label>Driver ID (optional)<input value={form.driverId} onChange={e => setForm({...form, driverId:e.target.value})} placeholder="Firebase user ID" /></label>
+        <label>Assigned driver<select value={form.driverId} onChange={e => setForm({...form, driverId:e.target.value})}><option value="">Unassigned</option>{drivers.filter(d => !trucks.some(t => t.id !== editing && t.driverId === d.id)).map(d => <option key={d.id} value={d.id}>{d.displayName || d.phone || d.id}</option>)}</select></label>
         <label>Notes<textarea value={form.notes} onChange={e => setForm({...form, notes:e.target.value})} rows={3}/></label>
         <button className="primary-button" type="submit">{editing ? 'Save changes' : 'Add truck'}</button>
       </form></div>}
