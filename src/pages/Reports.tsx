@@ -22,7 +22,8 @@ export default function Reports(){
   onSnapshot(collection(db,'fuelRecords'),s=>setFuel(s.docs.map(d=>({id:d.id,...d.data()} as FuelRecord))),()=>setError('Unable to load fuel records.')),
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.'))
  ];return()=>u.forEach(x=>x())},[owner])
- const inRange=(date?:string)=>!!date&&date>=from&&date<=to
+ const validRange=from<=to
+ const inRange=(date?:string)=>validRange&&!!date&&date>=from&&date<=to
  const filtered=useMemo(()=>({deliveries:deliveries.filter(d=>inRange(d.orderDate)),expenses:expenses.filter(e=>inRange(e.date)),fuel:fuel.filter(f=>inRange(f.date))}),[deliveries,expenses,fuel,from,to])
  const totals=useMemo(()=>{const revenue=filtered.deliveries.reduce((s,d)=>s+Math.max(0,Number(d.price)||0),0);const received=filtered.deliveries.reduce((s,d)=>s+Math.max(0,Number(d.amountPaid)||0),0);const manualExpenses=filtered.expenses.reduce((s,e)=>s+(e.category==='Fuel'?0:Math.max(0,Number(e.amount)||0)),0);const fuelCost=filtered.fuel.reduce((s,f)=>s+Math.max(0,Number(f.amount)||0),0);const expenseTotal=manualExpenses+fuelCost;const fuelLitres=filtered.fuel.reduce((s,f)=>s+Math.max(0,Number(f.litres)||0),0);return{revenue,received,outstanding:Math.max(0,revenue-received),expenseTotal,fuelLitres,fuelCost,profit:revenue-expenseTotal}},[filtered])
  const categoryTotals=useMemo(()=>Object.entries(filtered.expenses.filter(e=>e.category!=='Fuel').reduce<Record<string,number>>((a,e)=>{const k=e.category||'Other';a[k]=(a[k]||0)+Math.max(0,Number(e.amount)||0);return a},{})).sort((a,b)=>b[1]-a[1]),[filtered.expenses])
@@ -33,6 +34,7 @@ export default function Reports(){
  return <section className="page-section">
   <div className="section-heading"><div><p className="eyebrow">Business insights</p><h2>Reports</h2><p className="muted">Review performance for any date range.</p></div></div>
   {error&&<div className="notice">{error}</div>}
+  {!validRange&&<div className="notice">The start date must be on or before the end date.</div>}
   <div className="report-filters"><label>From<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>To<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label></div>
   <div className="finance-stats">
    <div className="finance-stat"><div><span>Revenue</span><strong>{money(totals.revenue)}</strong></div><BarChart3 size={22}/></div>
