@@ -54,7 +54,7 @@
 - Delivery proof photo upload
 - Phone location sharing
 
-## Phase 9 — Hardening — In progress
+## Phase 9 — Hardening — Completed
 - Security review
 - Firestore and Storage rules review
 - Validation and permission edge cases
@@ -63,6 +63,10 @@
 - Mobile QA
 - Production build verification
 - Remove remaining placeholder screens
+- Customer management and search
+- Fuel logging with driver truck restrictions
+- Driver-specific delivery permissions
+- Active-owner permission hardening
 
 ## Phase 10 — Launch readiness
 - Firebase production configuration
