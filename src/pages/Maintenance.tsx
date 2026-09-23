@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { AlertTriangle, CheckCircle2, Plus, Trash2, Wrench, X } from 'lucide-react'
 import { auth, db } from '../lib/firebase'
 
@@ -14,8 +14,14 @@ export default function Maintenance(){
  useEffect(()=>{if(!db||!auth.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(s=>{setRole(s.data()?.role??'');setAssigned(s.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
  useEffect(()=>{if(!db)return;const unsubs=[
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.')),
-  onSnapshot(query(collection(db,'maintenanceRecords'),orderBy('date','desc')),s=>setRecords(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord))),()=>setError('Unable to load maintenance records.'))
- ];return()=>unsubs.forEach(u=>u())},[])
+  onSnapshot(
+    role==='driver' && assigned
+      ? query(collection(db,'maintenanceRecords'),where('truckId','==',assigned))
+      : collection(db,'maintenanceRecords'),
+    s=>setRecords(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord)).sort((a,b)=>b.date.localeCompare(a.date))),
+    ()=>setError('Unable to load maintenance records.')
+  )
+ ];return()=>unsubs.forEach(u=>u())},[role,assigned])
  const usableTrucks=role==='driver'?trucks.filter(t=>t.id===assigned):trucks
  const money=(v:number)=>'R'+v.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})
  const today=new Date().toISOString().slice(0,10)
