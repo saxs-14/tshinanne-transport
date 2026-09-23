@@ -63,7 +63,7 @@ function AppShell({ user }: { user: User }) {
         <Routes>
           <Route path="/" element={<Dashboard user={user} />} />
           <Route path="/trucks" element={<Trucks />} />
-          <Route path="/deliveries" element={<Placeholder title="Deliveries" description="Record customer orders, assignments, delivery status and payments." />} />
+          <Route path="/deliveries" element={<Deliveries />} />
           <Route path="/customers" element={<Placeholder title="Customers" description="Keep customer contact details and delivery history in one place." />} />
           <Route path="/finance" element={<Placeholder title="Finance" description="Track income, expenses and estimated business profit." />} />
           <Route path="/fuel" element={<Placeholder title="Fuel" description="Record litres, fuel costs, stations and odometer readings." />} />
