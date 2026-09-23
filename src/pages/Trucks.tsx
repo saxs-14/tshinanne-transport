@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { collection, deleteDoc, doc, onSnapshot, query, where, writeBatch } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, onSnapshot, query, where, writeBatch } from 'firebase/firestore'
 import { Plus, Truck as TruckIcon, X, Pencil, Trash2 } from 'lucide-react'
-import { db } from '../lib/firebase'
+import { auth, db } from '../lib/firebase'
 
 type DriverRecord = {
   id: string
@@ -35,10 +35,18 @@ const emptyTruck = {
 export default function Trucks() {
   const [trucks, setTrucks] = useState<TruckRecord[]>([])
   const [drivers, setDrivers] = useState<DriverRecord[]>([])
+  const [isOwner, setIsOwner] = useState(false)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [form, setForm] = useState(emptyTruck)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!db || !auth?.currentUser) return
+    getDoc(doc(db, 'users', auth.currentUser.uid)).then(snapshot => {
+      setIsOwner(snapshot.exists() && snapshot.data().role === 'owner' && snapshot.data().active === true)
+    }).catch(() => setError('Unable to load your profile.'))
+  }, [])
 
   useEffect(() => {
     if (!db) return
@@ -170,7 +178,7 @@ export default function Trucks() {
           <h2>Truck Management</h2>
           <p className="muted">Keep the two TATA 1518 trucks and their operating details up to date.</p>
         </div>
-        <button className="primary-button compact" onClick={startAdd}><Plus size={17}/> Add truck</button>
+        {isOwner && <button className="primary-button compact" onClick={startAdd}><Plus size={17}/> Add truck</button>}
       </div>
 
       {error && <div className="notice">{error}</div>}
@@ -196,10 +204,10 @@ export default function Trucks() {
               <h3>{truck.registrationNumber}</h3>
               <div className="truck-detail"><span>Odometer</span><strong>{Number(truck.currentOdometer || 0).toLocaleString()} km</strong></div>
               <div className="truck-detail"><span>Driver</span><strong>{driver?.displayName || driver?.phone || 'Not assigned'}</strong></div>
-              <div className="card-actions">
+              {isOwner && <div className="card-actions">
                 <button onClick={() => startEdit(truck)}><Pencil size={15}/> Edit</button>
                 <button onClick={() => remove(truck.id)}><Trash2 size={15}/> Delete</button>
-              </div>
+              </div>}
             </article>
           )
         })}
