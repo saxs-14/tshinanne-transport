@@ -43,3 +43,14 @@ button, a { font: inherit; }
   .app-shell { padding-bottom: 0; }
 }
 @media (max-width: 600px) { .hero { align-items: flex-start; flex-direction: column; } .truck-badge { width: 100%; justify-content: flex-start; } }
+.auth-page { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+.auth-card { width: min(420px, 100%); background: white; padding: 28px; border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,.08); }
+.auth-logo { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 16px; background: #111827; color: white; margin-bottom: 18px; }
+.auth-card h1 { margin: 5px 0 8px; font-size: 30px; }
+.auth-card form { display: grid; gap: 14px; margin-top: 22px; }
+.auth-card label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
+.auth-card input { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; font: inherit; outline: none; }
+.auth-card input:focus { border-color: #111827; }
+.primary-button { border: 0; border-radius: 11px; padding: 13px; background: #111827; color: white; font-weight: 800; cursor: pointer; }
+.notice { margin-top: 18px; padding: 12px; border-radius: 10px; background: #f3f4f6; color: #4b5563; font-size: 12px; line-height: 1.5; }
+.form-error { margin: 0; color: #b91c1c; font-size: 12px; }
