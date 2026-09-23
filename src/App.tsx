@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { signOut, type User } from 'firebase/auth'
 import { BarChart3, ClipboardList, Fuel, LayoutDashboard, LogOut, Settings, Truck, Users, Wrench } from 'lucide-react'
 import Login from './pages/Login'
+import Trucks from './pages/Trucks'
 import ProtectedRoute from './components/ProtectedRoute'
 import { auth } from './lib/firebase'
 
@@ -61,7 +62,7 @@ function AppShell({ user }: { user: User }) {
       <main className="content">
         <Routes>
           <Route path="/" element={<Dashboard user={user} />} />
-          <Route path="/trucks" element={<Placeholder title="Truck Management" description="Manage the two TATA 1518 trucks, drivers, odometers and status." />} />
+          <Route path="/trucks" element={<Trucks />} />
           <Route path="/deliveries" element={<Placeholder title="Deliveries" description="Record customer orders, assignments, delivery status and payments." />} />
           <Route path="/customers" element={<Placeholder title="Customers" description="Keep customer contact details and delivery history in one place." />} />
           <Route path="/finance" element={<Placeholder title="Finance" description="Track income, expenses and estimated business profit." />} />
