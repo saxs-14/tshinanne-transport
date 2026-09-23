@@ -36,10 +36,12 @@ function Dashboard({user}:{user:User}){
     s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),
     ()=>setError('Unable to load deliveries.')
   ),
-  onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),
-  onSnapshot(collection(db,'maintenanceRecords'),s=>setMaintenance(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord))),()=>setError('Unable to load maintenance warnings.'))
+  onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.'))
  ]
- if(isOwner)unsubs.push(onSnapshot(collection(db,'expenses'),s=>setExpenses(s.docs.map(d=>({id:d.id,...d.data()} as Expense))),()=>setError('Unable to load expenses.')))
+ if(isOwner){
+  unsubs.push(onSnapshot(collection(db,'maintenanceRecords'),s=>setMaintenance(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord))),()=>setError('Unable to load maintenance warnings.')))
+  unsubs.push(onSnapshot(collection(db,'expenses'),s=>setExpenses(s.docs.map(d=>({id:d.id,...d.data()} as Expense))),()=>setError('Unable to load expenses.')))
+ }
  return()=>unsubs.forEach(u=>u())},[ready,isOwner])
  const today=localDate()
  const todayDeliveries=deliveries.filter(d=>d.orderDate===today)
