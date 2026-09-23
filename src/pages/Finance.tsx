@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { addDoc, collection, onSnapshot, orderBy, query, getDocs } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { BarChart3, Plus, X, Wallet, TrendingDown, TrendingUp, Clock } from 'lucide-react'
 import { db, auth } from '../lib/firebase'
 
