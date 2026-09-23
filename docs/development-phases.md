@@ -61,7 +61,7 @@
 - Error handling
 - Accessibility
 - Mobile QA
-- Production build verification
+- Production build verification — pending successful CI run
 - Remove remaining placeholder screens
 - Customer management and search
 - Fuel logging with driver truck restrictions
