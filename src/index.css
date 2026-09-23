@@ -112,3 +112,15 @@ button, a { font: inherit; }
 .truck-report-list{display:grid}.truck-report-row{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-top:1px solid #f3f4f6}.truck-report-row>div{display:grid;gap:4px}.truck-report-row span{font-size:11px;color:#6b7280}
 @media(max-width:700px){.report-grid{grid-template-columns:1fr}.dashboard-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.report-filters{grid-template-columns:1fr}}
+
+.operations-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.operation-title{display:flex;align-items:center;gap:10px}.operation-title h3{margin:3px 0}
+.checklist{display:grid;gap:9px;margin-top:14px}.checklist label{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid #f3f4f6;font-size:13px}.checklist input{width:18px;height:18px}
+.checklist textarea,.page-card>select,.upload-field input{width:100%;margin-top:10px;border:1px solid #d1d5db;border-radius:9px;padding:10px;font:inherit}
+.success-box{display:flex;align-items:center;gap:8px;margin-top:16px;padding:12px;border-radius:10px;background:#f3f4f6;font-size:12px;font-weight:700}
+.operation-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.upload-field{display:grid;gap:5px;font-size:12px;font-weight:700;margin:12px 0}.upload-field input{margin-top:0}
+.location-status{margin-top:10px;padding:10px;border-radius:9px;background:#f3f4f6;color:#6b7280;font-size:11px;word-break:break-word}
+button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:850px){.operations-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.operations-grid{grid-template-columns:1fr}}
