@@ -78,13 +78,22 @@ service cloud.firestore {
         || resource.data.createdBy == request.auth.uid
         || resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
       );
-      allow create: if isActiveUser() && (
-        isOwner()
-        || (
-          request.resource.data.createdBy == request.auth.uid
-          && request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
-        )
-      );
+      allow create: if isActiveUser()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.truckId is string
+        && request.resource.data.truckId != ''
+        && request.resource.data.litres is number
+        && request.resource.data.litres > 0
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= 0
+        && request.resource.data.odometer is number
+        && request.resource.data.odometer >= 0
+        && request.resource.data.date is string
+        && request.resource.data.date != ''
+        && (
+          isOwner()
+          || request.resource.data.truckId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedTruckId
+        );
       allow update, delete: if isOwner();
     }
 
