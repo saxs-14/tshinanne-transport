@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore'
 import { AlertTriangle, CheckCircle2, Plus, Trash2, Wrench, X } from 'lucide-react'
 import { auth, db } from '../lib/firebase'
 
@@ -11,7 +11,7 @@ const empty={truckId:'',category:'Service',description:'',amount:0,odometer:0,da
 export default function Maintenance(){
  const[trucks,setTrucks]=useState<Truck[]>([]),[records,setRecords]=useState<MaintenanceRecord[]>([]),[role,setRole]=useState(''),[assigned,setAssigned]=useState('')
  const[open,setOpen]=useState(false),[editing,setEditing]=useState<string|null>(null),[form,setForm]=useState(empty),[error,setError]=useState('')
- useEffect(()=>{if(!db||!auth.currentUser)return;auth.currentUser.getIdToken().catch(()=>{});import('firebase/firestore').then(({getDoc,doc})=>getDoc(doc(db,'users',auth.currentUser!.uid)).then(s=>setRole(s.data()?.role??'')).catch(()=>setError('Unable to load your profile.')))},[])
+ useEffect(()=>{if(!db||!auth.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(s=>{setRole(s.data()?.role??'');setAssigned(s.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
  useEffect(()=>{if(!db)return;const unsubs=[
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.')),
   onSnapshot(query(collection(db,'maintenanceRecords'),orderBy('date','desc')),s=>setRecords(s.docs.map(d=>({id:d.id,...d.data()} as MaintenanceRecord))),()=>setError('Unable to load maintenance records.'))
