@@ -45,7 +45,7 @@
 - Maintenance reminders
 - Inspection checklist
 
-## Phase 7 — Reporting
+## Phase 7 — Reporting — Completed\n- Live dashboard totals\n- Date-range reports\n- Truck performance\n- Expenses by category\n- Fuel analytics\n- Customer outstanding balance totals\n\n## Phase 7 — Reporting
 - Truck profitability
 - Revenue by period
 - Expenses by category
