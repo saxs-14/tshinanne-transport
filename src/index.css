@@ -79,3 +79,15 @@ button, a { font: inherit; }
 .modal input, .modal select, .modal textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 9px; padding: 10px; font: inherit; background: white; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 560px) { .section-heading { flex-direction: column; } .compact { width: 100%; justify-content: center; } .form-row { grid-template-columns: 1fr; } }
+
+.delivery-list { display:grid; gap:12px; }
+.delivery-card { background:white; border-radius:16px; padding:16px; display:grid; gap:10px; }
+.delivery-main { display:flex; align-items:center; gap:12px; }
+.delivery-icon { width:44px; height:44px; display:grid; place-items:center; border-radius:12px; background:#f3f4f6; }
+.delivery-card h3 { margin:3px 0; font-size:18px; }
+.delivery-meta { display:flex; align-items:center; flex-wrap:wrap; gap:7px; }
+.pill { padding:5px 9px; border-radius:999px; background:#f3f4f6; font-size:10px; font-weight:800; text-transform:capitalize; }
+.delivery-meta strong { margin-left:auto; font-size:17px; }
+.delivery-detail { display:flex; justify-content:space-between; padding-top:9px; border-top:1px solid #f3f4f6; font-size:12px; }
+.delivery-detail span { color:#6b7280; }
+.secondary-button { display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid #d1d5db; background:white; color:#111827; border-radius:10px; padding:10px 12px; font-weight:700; cursor:pointer; }
