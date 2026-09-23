@@ -1,92 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
-import { addDoc, collection, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { addDoc, collection, onSnapshot, query, orderBy, where } from 'firebase/firestore'
 import { ClipboardList, Plus, X, Truck as TruckIcon, MapPin } from 'lucide-react'
 import { db } from '../lib/firebase'
-
-type Customer = { id: string; name: string; phone?: string; address?: string }
-type TruckRecord = { id: string; registrationNumber: string; make: string; model: string; status: 'active' | 'maintenance' | 'inactive' }
-type Driver = { id: string; displayName?: string; phone?: string; role?: string; active?: boolean }
-type Delivery = {
-  id: string; customerId: string; customerName?: string; truckId: string; truckRegistration?: string
-  driverId?: string; driverName?: string; sandType: string; quantity: number; quantityUnit: string
-  price: number; amountPaid: number; paymentStatus: 'unpaid' | 'partial' | 'paid'
-  deliveryStatus: 'pending' | 'on_the_way' | 'delivered'; orderDate: string; deliveryDate?: string; notes?: string
-}
-const emptyForm = { customerId:'', truckId:'', driverId:'', sandType:'Building Sand', quantity:1, quantityUnit:'load',
-  price:0, amountPaid:0, paymentStatus:'unpaid' as Delivery['paymentStatus'], deliveryStatus:'pending' as Delivery['deliveryStatus'],
-  orderDate:new Date().toISOString().slice(0,10), deliveryDate:'', notes:'' }
-
-export default function Deliveries() {
-  const [customers,setCustomers]=useState<Customer[]>([]), [trucks,setTrucks]=useState<TruckRecord[]>([])
-  const [drivers,setDrivers]=useState<Driver[]>([]), [deliveries,setDeliveries]=useState<Delivery[]>([])
-  const [open,setOpen]=useState(false), [customerOpen,setCustomerOpen]=useState(false), [form,setForm]=useState(emptyForm)
-  const [customerForm,setCustomerForm]=useState({name:'',phone:'',address:'',notes:''}), [error,setError]=useState('')
-
-  useEffect(() => {
-    if (!db) return
-    const u = [
-      onSnapshot(collection(db,'customers'),s=>setCustomers(s.docs.map(d=>({id:d.id,...d.data()} as Customer))),()=>setError('Unable to load customers.')),
-      onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),
-      onSnapshot(collection(db,'users'),s=>setDrivers(s.docs.map(d=>({id:d.id,...d.data()} as Driver)).filter(d=>d.role==='driver'&&d.active!==false)),()=>setError('Unable to load drivers.')),
-      onSnapshot(query(collection(db,'deliveries'),orderBy('orderDate','desc')),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load deliveries.'))
-    ]
-    return () => u.forEach(x=>x())
-  },[])
-
-  const activeTrucks=useMemo(()=>trucks.filter(t=>t.status==='active'),[trucks])
-  const customer=customers.find(c=>c.id===form.customerId), truck=trucks.find(t=>t.id===form.truckId), driver=drivers.find(d=>d.id===form.driverId)
-  function startAdd(){setForm({...emptyForm,customerId:customers[0]?.id??'',truckId:activeTrucks[0]?.id??'',driverId:drivers[0]?.id??''});setError('');setOpen(true)}
-  function payment(amount:number,price:number):Delivery['paymentStatus']{if(amount<=0)return'unpaid';if(amount>=price&&price>0)return'paid';return'partial'}
-
-  async function saveDelivery(e:React.FormEvent){
-    e.preventDefault(); if(!db){setError('Firebase is not configured.');return}
-    if(!form.customerId||!form.truckId||!form.sandType.trim()||Number(form.quantity)<=0||Number(form.price)<0){setError('Customer, truck, sand type, quantity and price are required.');return}
-    try{const amountPaid=Math.max(0,Number(form.amountPaid)||0),price=Math.max(0,Number(form.price)||0)
-      await addDoc(collection(db,'deliveries'),{...form,quantity:Number(form.quantity),price,amountPaid,paymentStatus:payment(amountPaid,price),
-        customerName:customer?.name??'',truckRegistration:truck?.registrationNumber??'',driverName:driver?.displayName??driver?.phone??'',
-        deliveryDate:form.deliveryDate||null,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()})
-      setOpen(false);setForm(emptyForm)
-    }catch{setError('Could not save the delivery. Check your permissions.')}
-  }
-  async function saveCustomer(e:React.FormEvent){
-    e.preventDefault();if(!db){setError('Firebase is not configured.');return}if(!customerForm.name.trim()){setError('Customer name is required.');return}
-    try{const ref=await addDoc(collection(db,'customers'),{...customerForm,name:customerForm.name.trim(),createdAt:new Date().toISOString()})
-      setForm(f=>({...f,customerId:ref.id}));setCustomerForm({name:'',phone:'',address:'',notes:''});setCustomerOpen(false);setError('')
-    }catch{setError('Could not save the customer. Check your permissions.')}
-  }
-
-  return <section className="page-section">
-    <div className="section-heading"><div><p className="eyebrow">Operations</p><h2>Deliveries</h2><p className="muted">Record orders and follow them from pending to delivered and paid.</p></div>
-      <button className="primary-button compact" onClick={startAdd}><Plus size={17}/> New delivery</button></div>
-    {error&&<div className="notice">{error}</div>}
-    <div className="delivery-list">{deliveries.length===0&&<div className="page-card empty-state"><ClipboardList size={30}/><h3>No deliveries recorded yet</h3><p className="muted">Create the first delivery after adding customer and truck records.</p></div>}
-      {deliveries.map(d=><article className="delivery-card" key={d.id}><div className="delivery-main"><div className="delivery-icon"><TruckIcon size={22}/></div><div>
-        <p className="eyebrow">{d.orderDate}</p><h3>{d.customerName||'Customer'}</h3><p className="muted">{d.sandType} · {d.quantity} {d.quantityUnit}</p></div></div>
-        <div className="delivery-meta"><span className="pill">{d.deliveryStatus.replace('_',' ')}</span><span className="pill">{d.paymentStatus}</span><strong>R{Number(d.price).toLocaleString('en-ZA',{minimumFractionDigits:2})}</strong></div>
-        <div className="delivery-detail"><span>Truck</span><strong>{d.truckRegistration||d.truckId}</strong></div><div className="delivery-detail"><span>Driver</span><strong>{d.driverName||'Not assigned'}</strong></div>
-        {d.deliveryDate&&<div className="delivery-detail"><span>Delivery date</span><strong>{d.deliveryDate}</strong></div>}</article>)}</div>
-
-    {open&&<div className="modal-backdrop"><form className="modal" onSubmit={saveDelivery}><div className="modal-heading"><div><p className="eyebrow">Customer → truck → delivery</p><h3>New delivery</h3></div>
-      <button type="button" className="close-button" onClick={()=>setOpen(false)}><X/></button></div>
-      {customers.length===0?<div className="notice">No customers yet. Add a customer below before saving.</div>:<label>Customer<select value={form.customerId} onChange={e=>setForm({...form,customerId:e.target.value})}>{customers.map(c=><option key={c.id} value={c.id}>{c.name}{c.phone?' — '+c.phone:''}</option>)}</select></label>}
-      <button type="button" className="secondary-button" onClick={()=>setCustomerOpen(true)}><Plus size={15}/> Add customer</button>
-      <div className="form-row"><label>Truck<select value={form.truckId} onChange={e=>setForm({...form,truckId:e.target.value})}><option value="">Select truck</option>{activeTrucks.map(t=><option key={t.id} value={t.id}>{t.registrationNumber} — {t.make} {t.model}</option>)}</select></label>
-      <label>Driver<select value={form.driverId} onChange={e=>setForm({...form,driverId:e.target.value})}><option value="">Not assigned</option>{drivers.map(d=><option key={d.id} value={d.id}>{d.displayName||d.phone||d.id}</option>)}</select></label></div>
-      <div className="form-row"><label>Sand type<select value={form.sandType} onChange={e=>setForm({...form,sandType:e.target.value})}><option>Building Sand</option><option>Plaster Sand</option><option>River Sand</option><option>Other</option></select></label>
-      <label>Quantity<input type="number" min="0.1" step="0.1" value={form.quantity} onChange={e=>setForm({...form,quantity:Number(e.target.value)})} required/></label></div>
-      <label>Quantity unit<select value={form.quantityUnit} onChange={e=>setForm({...form,quantityUnit:e.target.value})}><option value="load">Load</option><option value="m³">m³</option><option value="trip">Trip</option></select></label>
-      <div className="form-row"><label>Price (R)<input type="number" min="0" step="0.01" value={form.price} onChange={e=>setForm({...form,price:Number(e.target.value)})} required/></label>
-      <label>Amount paid (R)<input type="number" min="0" step="0.01" value={form.amountPaid} onChange={e=>setForm({...form,amountPaid:Number(e.target.value)})}/></label></div>
-      <div className="form-row"><label>Order date<input type="date" value={form.orderDate} onChange={e=>setForm({...form,orderDate:e.target.value})} required/></label><label>Delivery date<input type="date" value={form.deliveryDate} onChange={e=>setForm({...form,deliveryDate:e.target.value})}/></label></div>
-      <div className="form-row"><label>Delivery status<select value={form.deliveryStatus} onChange={e=>setForm({...form,deliveryStatus:e.target.value as Delivery['deliveryStatus']})}><option value="pending">Pending</option><option value="on_the_way">On the way</option><option value="delivered">Delivered</option></select></label>
-      <label>Payment status<select value={form.paymentStatus} onChange={e=>setForm({...form,paymentStatus:e.target.value as Delivery['paymentStatus']})}><option value="unpaid">Unpaid</option><option value="partial">Partially paid</option><option value="paid">Paid</option></select></label></div>
-      <label>Delivery location / notes<textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} rows={3} placeholder="Address, landmark or special instructions"/></label>
-      <button className="primary-button" type="submit">Save delivery</button></form></div>}
-
-    {customerOpen&&<div className="modal-backdrop"><form className="modal" onSubmit={saveCustomer}><div className="modal-heading"><div><p className="eyebrow">Customer record</p><h3>Add customer</h3></div>
-      <button type="button" className="close-button" onClick={()=>setCustomerOpen(false)}><X/></button></div>
-      <label>Name<input value={customerForm.name} onChange={e=>setCustomerForm({...customerForm,name:e.target.value})} required/></label><label>Phone<input value={customerForm.phone} onChange={e=>setCustomerForm({...customerForm,phone:e.target.value})}/></label>
-      <label>Address / location<input value={customerForm.address} onChange={e=>setCustomerForm({...customerForm,address:e.target.value})}/></label><label>Notes<textarea value={customerForm.notes} onChange={e=>setCustomerForm({...customerForm,notes:e.target.value})} rows={3}/></label>
-      <button className="primary-button" type="submit"><MapPin size={16}/> Save customer</button></form></div>}
-  </section>
-}
+type Customer={id:string;name:string;phone?:string;address?:string}
+type TruckRecord={id:string;registrationNumber:string;make:string;model:string;status:'active'|'maintenance'|'inactive'}
+type Driver={id:string;displayName?:string;phone?:string;role?:string;active?:boolean}
+type Delivery={id:string;customerId:string;customerName?:string;truckId:string;truckRegistration?:string;driverId?:string;driverName?:string;sandType:string;quantity:number;quantityUnit:string;price:number;amountPaid:number;paymentStatus:'unpaid'|'partial'|'paid';deliveryStatus:'pending'|'on_the_way'|'delivered';orderDate:string;deliveryDate?:string;notes?:string}
+const emptyForm={customerId:'',truckId:'',driverId:'',sandType:'Building Sand',quantity:1,quantityUnit:'load',price:0,amountPaid:0,paymentStatus:'unpaid' as Delivery['paymentStatus'],deliveryStatus:'pending' as Delivery['deliveryStatus'],orderDate:new Date().toISOString().slice(0,10),deliveryDate:'',notes:''}
+export default function Deliveries(){
+ const[customers,setCustomers]=useState<Customer[]>([]),[trucks,setTrucks]=useState<TruckRecord[]>([]),[drivers,setDrivers]=useState<Driver[]>([]),[deliveries,setDeliveries]=useState<Delivery[]>([])
+ const[open,setOpen]=useState(false),[customerOpen,setCustomerOpen]=useState(false),[form,setForm]=useState(emptyForm),[customerForm,setCustomerForm]=useState({name:'',phone:'',address:'',notes:''}),[error,setError]=useState('')
+ useEffect(()=>{if(!db)return;const u=[onSnapshot(collection(db,'customers'),s=>setCustomers(s.docs.map(d=>({id:d.id,...d.data()} as Customer))),()=>setError('Unable to load customers.')),onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as TruckRecord))),()=>setError('Unable to load trucks.')),onSnapshot(query(collection(db,'users'),where('role','==','driver'),where('active','==',true)),s=>setDrivers(s.docs.map(d=>({id:d.id,...d.data()} as Driver))),()=>setError('Unable to load drivers.')),onSnapshot(query(collection(db,'deliveries'),orderBy('orderDate','desc')),s=>setDeliveries(s.docs.map(d=>({id:d.id,...d.data()} as Delivery))),()=>setError('Unable to load deliveries.'))];return()=>u.forEach(x=>x())},[])
+ const activeTrucks=useMemo(()=>trucks.filter(t=>t.status==='active'),[trucks]);const customer=customers.find(c=>c.id===form.customerId),truck=trucks.find(t=>t.id===form.truckId),driver=drivers.find(d=>d.id===form.driverId)
+ function startAdd(){setForm({...emptyForm,customerId:customers[0]?.id??'',truckId:activeTrucks[0]?.id??'',driverId:drivers[0]?.id??''});setError('');setOpen(true)}
+ function payment(a:number,p:number):Delivery['paymentStatus']{if(a<=0)return'unpaid';if(a>=p&&p>0)return'paid';return'partial'}
+ async function saveDelivery(e:React.FormEvent){e.preventDefault();if(!db){setError('Firebase is not configured.');return}if(!form.customerId||!form.truckId||!form.sandType.trim()||Number(form.quantity)<=0||Number(form.price)<0){setError('Customer, truck, sand type, quantity and price are required.');return}try{const amountPaid=Math.max(0,Number(form.amountPaid)||0),price=Math.max(0,Number(form.price)||0);await addDoc(collection(db,'deliveries'),{...form,quantity:Number(form.quantity),price,amountPaid,paymentStatus:payment(amountPaid,price),customerName:customer?.name??'',truckRegistration:truck?.registrationNumber??'',driverName:driver?.displayName??driver?.phone??'',deliveryDate:form.deliveryDate||null,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});setOpen(false);setForm(emptyForm)}catch{setError('Could not save the delivery. Check your permissions.')}}
+ async function saveCustomer(e:React.FormEvent){e.preventDefault();if(!db){setError('Firebase is not configured.');return}if(!customerForm.name.trim()){setError('Customer name is required.');return}try{const ref=await addDoc(collection(db,'customers'),{...customerForm,name:customerForm.name.trim(),createdAt:new Date().toISOString()});setForm(f=>({...f,customerId:ref.id}));setCustomerForm({name:'',phone:'',address:'',notes:''});setCustomerOpen(false);setError('')}catch{setError('Could not save the customer. Check your permissions.')}}
+ return <section className="page-section"><div className="section-heading"><div><p className="eyebrow">Operations</p><h2>Deliveries</h2><p className="muted">Record orders and follow them from pending to delivered and paid.</p></div><button className="primary-button compact" onClick={startAdd}><Plus size={17}/> New delivery</button></div>
+ {error&&<div className="notice">{error}</div>}<div className="delivery-list">{deliveries.length===0&&<div className="page-card empty-state"><ClipboardList size={30}/><h3>No deliveries recorded yet</h3><p className="muted">Create the first delivery after adding customer and truck records.</p></div>}{deliveries.map(d=><article className="delivery-card" key={d.id}><div className="delivery-main"><div className="delivery-icon"><TruckIcon size={22}/></div><div><p className="eyebrow">{d.orderDate}</p><h3>{d.customerName||'Customer'}</h3><p className="muted">{d.sandType} · {d.quantity} {d.quantityUnit}</p></div></div><div className="delivery-meta"><span className="pill">{d.deliveryStatus.replace('_',' ')}</span><span className="pill">{d.paymentStatus}</span><strong>R{Number(d.price).toLocaleString('en-ZA',{minimumFractionDigits:2})}</strong></div><div className="delivery-detail"><span>Truck</span><strong>{d.truckRegistration||d.truckId}</strong></div><div className="delivery-detail"><span>Driver</span><strong>{d.driverName||'Not assigned'}</strong></div>{d.deliveryDate&&<div className="delivery-detail"><span>Delivery date</span><strong>{d.deliveryDate}</strong></div>}</article>)}</div>
+ {open&&<div className="modal-backdrop"><form className="modal" onSubmit={saveDelivery}><div className="modal-heading"><div><p className="eyebrow">Customer → truck → delivery</p><h3>New delivery</h3></div><button type="button" className="close-button" onClick={()=>setOpen(false)}><X/></button></div>
+ {customers.length===0?<div className="notice">No customers yet. Add a customer below before saving.</div>:<label>Customer<select value={form.customerId} onChange={e=>setForm({...form,customerId:e.target.value})}>{customers.map(c=><option key={c.id} value={c.id}>{c.name}{c.phone?' — '+c.phone:''}</option>)}</select></label>}<button type="button" className="secondary-button" onClick={()=>setCustomerOpen(true)}><Plus size={15}/> Add customer</button>
+ <div className="form-row"><label>Truck<select value={form.truckId} onChange={e=>setForm({...form,truckId:e.target.value})}><option value="">Select truck</option>{activeTrucks.map(t=><option key={t.id} value={t.id}>{t.registrationNumber} — {t.make} {t.model}</option>)}</select></label><label>Driver<select value={form.driverId} onChange={e=>setForm({...form,driverId:e.target.value})}><option value="">Not assigned</option>{drivers.map(d=><option key={d.id} value={d.id}>{d.displayName||d.phone||d.id}</option>)}</select></label></div>
+ <div className="form-row"><label>Sand type<select value={form.sandType} onChange={e=>setForm({...form,sandType:e.target.value})}><option>Building Sand</option><option>Plaster Sand</option><option>River Sand</option><option>Other</option></select></label><label>Quantity<input type="number" min="0.1" step="0.1" value={form.quantity} onChange={e=>setForm({...form,quantity:Number(e.target.value)})} required/></label></div>
+ <label>Quantity unit<select value={form.quantityUnit} onChange={e=>setForm({...form,quantityUnit:e.target.value})}><option value="load">Load</option><option value="m³">m³</option><option value="trip">Trip</option></select></label>
+ <div className="form-row"><label>Price (R)<input type="number" min="0" step="0.01" value={form.price} onChange={e=>setForm({...form,price:Number(e.target.value)})} required/></label><label>Amount paid (R)<input type="number" min="0" step="0.01" value={form.amountPaid} onChange={e=>setForm({...form,amountPaid:Number(e.target.value)})}/></label></div>
+ <div className="form-row"><label>Order date<input type="date" value={form.orderDate} onChange={e=>setForm({...form,orderDate:e.target.value})} required/></label><label>Delivery date<input type="date" value={form.deliveryDate} onChange={e=>setForm({...form,deliveryDate:e.target.value})}/></label></div>
+ <label>Delivery status<select value={form.deliveryStatus} onChange={e=>setForm({...form,deliveryStatus:e.target.value as Delivery['deliveryStatus']})}><option value="pending">Pending</option><option value="on_the_way">On the way</option><option value="delivered">Delivered</option></select></label>
+ <label>Delivery location / notes<textarea value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} rows={3} placeholder="Address, landmark or special instructions"/></label><button className="primary-button" type="submit">Save delivery</button></form></div>}
+ {customerOpen&&<div className="modal-backdrop"><form className="modal" onSubmit={saveCustomer}><div className="modal-heading"><div><p className="eyebrow">Customer record</p><h3>Add customer</h3></div><button type="button" className="close-button" onClick={()=>setCustomerOpen(false)}><X/></button></div><label>Name<input value={customerForm.name} onChange={e=>setCustomerForm({...customerForm,name:e.target.value})} required/></label><label>Phone<input value={customerForm.phone} onChange={e=>setCustomerForm({...customerForm,phone:e.target.value})}/></label><label>Address / location<input value={customerForm.address} onChange={e=>setCustomerForm({...customerForm,address:e.target.value})}/></label><label>Notes<textarea value={customerForm.notes} onChange={e=>setCustomerForm({...customerForm,notes:e.target.value})} rows={3}/></label><button className="primary-button" type="submit"><MapPin size={16}/> Save customer</button></form></div>}
+ </section>
