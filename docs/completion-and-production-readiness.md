@@ -161,31 +161,48 @@ production Firebase project, real accounts, real truck data, deployment, real-de
 
 The remaining work is primarily **production configuration, deployment, real-data setup and real-device verification**, rather than building the core MVP screens.
 
-### A. Production Firebase setup — REQUIRED
+### A. Production Firebase setup — PARTIALLY DONE (2026-09-26)
 
-1. Create or select the production Firebase project.
-2. Enable Firebase Authentication.
-3. Enable Email/Password sign-in.
-4. Create the Firestore database.
-5. Enable Firebase Storage.
-6. Register the web application in Firebase.
-7. Create the production environment configuration from .env.example.
-8. Add the real Firebase configuration values to the deployment environment.
-9. Deploy firestore.rules.
-10. Deploy storage.rules.
-11. Deploy firestore.indexes.json.
+1. ~~Create or select the production Firebase project.~~ **DONE** — `tshinanne-transport`
+   (project number 96705889243), created via `firebase projects:create`.
+2. Enable Firebase Authentication. **NOT DONE — see note below.**
+3. Enable Email/Password sign-in. **NOT DONE — blocked on step 2.**
+4. ~~Create the Firestore database.~~ **DONE** — native mode, `africa-south1` (Johannesburg)
+   region, via `firebase firestore:databases:create`.
+5. Enable Firebase Storage. **Deliberately deferred** — the owner chose to stay on the free
+   Spark plan for now (see cost note below). Delivery-proof photo upload will show an error
+   until this is enabled.
+6. ~~Register the web application in Firebase.~~ **DONE** — via `firebase apps:create WEB`.
+7. ~~Create the production environment configuration from .env.example.~~ **DONE** — local
+   `.env` written with the real project's SDK config (gitignored, not committed).
+8. ~~Add the real Firebase configuration values to the deployment environment.~~ **DONE
+   locally** — still needed wherever this gets hosted/deployed (e.g. as CI/hosting secrets).
+9. ~~Deploy firestore.rules.~~ **DONE** — `firebase deploy --only firestore:rules`.
+10. Deploy storage.rules. **Deferred with Storage (step 5).**
+11. ~~Deploy firestore.indexes.json.~~ **DONE** — `firebase deploy --only firestore:indexes`.
 
-**Status:** Not verified as completed in a live Firebase project. The Firebase CLI on this
-machine is authenticated, but no `tshinanne-transport` Firebase project exists yet under that
-account — this must be created before any of the steps above can happen.
+**Remaining manual step — Authentication:** A brand-new Firebase project's Authentication
+product cannot be turned on purely via API/CLI — this was verified this session by calling the
+Identity Toolkit config and `identityPlatform:initializeAuth` endpoints directly; both
+consistently reported the API as unprovisioned even after enabling
+`identitytoolkit.googleapis.com` in Cloud Console and waiting for propagation. It genuinely
+requires one manual visit to the console the first time. To unblock:
+
+1. Open https://console.firebase.google.com/project/tshinanne-transport/authentication
+2. Click **Get started**.
+3. Enable the **Email/Password** sign-in provider.
+
+After that, Section B below (owner/driver accounts) can be completed — from the console directly
+under **Authentication → Users → Add user**, or Claude can do it via the Admin SDK/CLI once
+Auth is enabled.
 
 **Important cost note:** Firebase Authentication and Firestore are usable on the free Spark
 plan. Firebase Storage (needed for delivery-proof photos) currently requires the pay-as-you-go
 Blaze plan to enable on a new project — Blaze still has a generous free monthly quota, but it
-requires adding a billing/card method to the Google Cloud project. Confirm this in the Firebase
-console at project-creation time, since Google's plan requirements can change. If the owner
-wants to stay strictly on the free tier for now, delivery-proof photo upload would need to be
-deferred until Storage is enabled.
+requires adding a billing/card method to the Google Cloud project. If/when the owner is ready
+for delivery-proof photos, enable Storage in the console (or via `firebase init storage` +
+`firebase deploy --only storage`) and Claude can deploy `storage.rules` immediately after —
+it's already written and unchanged.
 
 ### B. Real user accounts — REQUIRED
 
