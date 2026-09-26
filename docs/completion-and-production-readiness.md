@@ -10,6 +10,45 @@ This document records what has been implemented in the Tshinanne Transport appli
 
 ---
 
+## 0. 2026-09-26 session update — build actually verified, real bugs fixed
+
+Earlier revisions of this document stated the production build had not been independently
+verified because network access was unavailable. That build was attempted this session and
+**it failed** — the codebase had real, uncaught defects:
+
+- A missing closing brace in `src/pages/Deliveries.tsx` (the file did not compile at all).
+- No `src/vite-env.d.ts`, so every `import.meta.env.VITE_FIREBASE_*` reference failed to typecheck.
+- Several real TypeScript errors: a missing `category` field on the dashboard's local `Expense`
+  type, a missing `driverId` field on Deliveries' local `TruckRecord` type, multiple
+  `auth.currentUser` accesses that didn't null-check `auth` itself, an unsound truck `status`
+  literal type, and a possibly-undefined odometer comparison in Maintenance's due-date logic.
+
+All of the above were fixed. `npm run build` now completes successfully.
+
+Additional hardening done this session:
+
+- `src/pages/AccessDenied.tsx` existed but was never wired into the app — an inactive account
+  would previously just see scattered "Unable to load…" errors instead of a clear message
+  (Firestore rules always blocked the actual data correctly; this was a UX gap, not a security
+  gap). `ProtectedRoute` now checks the signed-in user's `active` flag and shows `AccessDenied`
+  with a sign-out action when it is `false`.
+- Revenue/expense/profit math was duplicated three times (Dashboard, Finance, Reports) with
+  hand-copied `reduce()` calls. Extracted into `src/lib/finance.ts` as the single source of
+  truth for `paymentStatus`, `operatingCosts` (manual expenses + fuel, never double-counted),
+  and `estimatedProfit` (revenue − operating costs). All three screens now call the same
+  functions.
+- Added `vitest` and 14 unit tests covering that finance module (payment status, revenue,
+  outstanding balance, fuel/expense double-count prevention, profit, date-range validation).
+  Run with `npm run test`. Wired into `.github/workflows/build.yml` so CI runs tests before build.
+- `Trucks.tsx` truck deletion previously had no check for existing history — deleting a truck
+  with recorded deliveries, fuel or maintenance would silently orphan those records. It now
+  blocks deletion (with a message to set the truck inactive instead) if any such records exist.
+
+Not done this session (needs the business owner's input/credentials, see Section 2):
+production Firebase project, real accounts, real truck data, deployment, real-device testing.
+
+---
+
 ## 1. What has been completed
 
 ### Project foundation
@@ -136,7 +175,17 @@ The remaining work is primarily **production configuration, deployment, real-dat
 10. Deploy storage.rules.
 11. Deploy firestore.indexes.json.
 
-**Status:** Not verified as completed in a live Firebase project.
+**Status:** Not verified as completed in a live Firebase project. The Firebase CLI on this
+machine is authenticated, but no `tshinanne-transport` Firebase project exists yet under that
+account — this must be created before any of the steps above can happen.
+
+**Important cost note:** Firebase Authentication and Firestore are usable on the free Spark
+plan. Firebase Storage (needed for delivery-proof photos) currently requires the pay-as-you-go
+Blaze plan to enable on a new project — Blaze still has a generous free monthly quota, but it
+requires adding a billing/card method to the Google Cloud project. Confirm this in the Firebase
+console at project-creation time, since Google's plan requirements can change. If the owner
+wants to stay strictly on the free tier for now, delivery-proof photo upload would need to be
+deferred until Storage is enabled.
 
 ### B. Real user accounts — REQUIRED
 
@@ -177,18 +226,19 @@ The deployment must contain the production Firebase environment values and must 
 
 **Status:** Not deployed/verified as a live production application.
 
-### E. Build and CI verification — REQUIRED
+### E. Build and CI verification — LOCAL BUILD VERIFIED; CI RUN STILL REQUIRED
 
-The GitHub Actions build workflow exists, but the latest repository state has not been confirmed by a successful CI run.
+`npm install`, `npm run test` and `npm run build` were run locally in this session and all
+three succeed (see Section 0). The GitHub Actions workflow (`.github/workflows/build.yml`) now
+also runs tests before the build step.
 
-Required:
-1. Trigger the GitHub Actions workflow.
-2. Confirm dependency installation succeeds.
-3. Confirm npm run build succeeds.
-4. Fix any CI errors if they occur.
-5. Repeat until the production branch has a successful build.
+Still required:
+1. Push these changes and confirm the GitHub Actions workflow actually runs green on GitHub.
+2. Fix any CI-environment-specific errors if they occur (none are expected — the failures found
+   locally were genuine source bugs, not environment differences, and are now fixed).
 
-**Important:** A successful local build has not been independently verified in this development environment because network access to GitHub was unavailable during the previous verification attempt.
+**Status:** Local build/test — verified. Actual GitHub Actions run — not yet confirmed (requires
+pushing this branch).
 
 ### F. Real-device acceptance testing — REQUIRED
 
