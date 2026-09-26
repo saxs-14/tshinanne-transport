@@ -8,9 +8,9 @@ type FuelRecord={id:string;truckId:string;litres:number;amount:number;odometer:n
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 export default function Fuel(){
  const [trucks,setTrucks]=useState<Truck[]>([]),[records,setRecords]=useState<FuelRecord[]>([]),[role,setRole]=useState(''),[assigned,setAssigned]=useState(''),[form,setForm]=useState({truckId:'',litres:'',amount:'',odometer:'',station:'',date:today()}),[error,setError]=useState('')
- useEffect(()=>{if(!db||!auth.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(p=>{setRole(p.data()?.role??'');setAssigned(p.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
+ useEffect(()=>{if(!db||!auth?.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(p=>{setRole(p.data()?.role??'');setAssigned(p.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
  useEffect(()=>{if(!db)return;return onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.'))},[])
- useEffect(()=>{if(!db||!auth.currentUser||!role)return;const q=role==='owner'?collection(db,'fuelRecords'):assigned?query(collection(db,'fuelRecords'),where('truckId','==',assigned)):null;if(!q){setRecords([]);return}return onSnapshot(q,s=>setRecords(s.docs.map(d=>({id:d.id,...d.data()} as FuelRecord)).sort((a,b)=>b.date.localeCompare(a.date))),()=>setError('Unable to load fuel records.'))},[role,assigned])
+ useEffect(()=>{if(!db||!auth?.currentUser||!role)return;const q=role==='owner'?collection(db,'fuelRecords'):assigned?query(collection(db,'fuelRecords'),where('truckId','==',assigned)):null;if(!q){setRecords([]);return}return onSnapshot(q,s=>setRecords(s.docs.map(d=>({id:d.id,...d.data()} as FuelRecord)).sort((a,b)=>b.date.localeCompare(a.date))),()=>setError('Unable to load fuel records.'))},[role,assigned])
  const usable=role==='owner'?trucks:trucks.filter(t=>t.id===assigned)
  useEffect(()=>{if(role==='driver'&&assigned)setForm(f=>({...f,truckId:assigned}))},[role,assigned])
  const selectedTruck=trucks.find(t=>t.id===form.truckId)
@@ -18,7 +18,7 @@ export default function Fuel(){
  async function save(e:React.FormEvent){
   e.preventDefault()
   const odometer=Number(form.odometer)
-  if(!db||!auth.currentUser||!form.truckId||Number(form.litres)<=0||Number(form.amount)<0||odometer<0||!form.date){setError('Please enter a truck, positive litres, amount, date and odometer.');return}
+  if(!db||!auth?.currentUser||!form.truckId||Number(form.litres)<=0||Number(form.amount)<0||odometer<0||!form.date){setError('Please enter a truck, positive litres, amount, date and odometer.');return}
   if(role==='driver'&&form.truckId!==assigned){setError('You can only record fuel for your assigned truck.');return}
   const currentOdometer=Number(selectedTruck?.currentOdometer)
   if(Number.isFinite(currentOdometer)&&currentOdometer>0&&odometer<currentOdometer){

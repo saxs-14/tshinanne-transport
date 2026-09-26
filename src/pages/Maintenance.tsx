@@ -11,7 +11,7 @@ const empty={truckId:'',category:'Service',description:'',amount:0,odometer:0,da
 export default function Maintenance(){
  const[trucks,setTrucks]=useState<Truck[]>([]),[records,setRecords]=useState<MaintenanceRecord[]>([]),[role,setRole]=useState(''),[assigned,setAssigned]=useState('')
  const[open,setOpen]=useState(false),[editing,setEditing]=useState<string|null>(null),[form,setForm]=useState(empty),[error,setError]=useState('')
- useEffect(()=>{if(!db||!auth.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(s=>{setRole(s.data()?.role??'');setAssigned(s.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
+ useEffect(()=>{if(!db||!auth?.currentUser)return;getDoc(doc(db,'users',auth.currentUser.uid)).then(s=>{setRole(s.data()?.role??'');setAssigned(s.data()?.assignedTruckId??'')}).catch(()=>setError('Unable to load your profile.'))},[])
  useEffect(()=>{if(!db)return;const unsubs=[
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.')),
   onSnapshot(
@@ -25,7 +25,7 @@ export default function Maintenance(){
  const usableTrucks=role==='driver'?trucks.filter(t=>t.id===assigned):trucks
  const money=(v:number)=>'R'+v.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})
  const today=new Date().toISOString().slice(0,10)
- const due=useMemo(()=>records.filter(r=>(r.nextDueDate&&r.nextDueDate<=today)||(r.nextDueOdometer&&trucks.find(t=>t.id===r.truckId)?.currentOdometer>=r.nextDueOdometer)),[records,trucks,today])
+ const due=useMemo(()=>records.filter(r=>(r.nextDueDate&&r.nextDueDate<=today)||(r.nextDueOdometer&&(trucks.find(t=>t.id===r.truckId)?.currentOdometer??0)>=r.nextDueOdometer)),[records,trucks,today])
  function startNew(){setEditing(null);const first=usableTrucks[0];setForm({...empty,truckId:first?.id??'',odometer:first?.currentOdometer??0});setError('');setOpen(true)}
  function startEdit(r:MaintenanceRecord){setEditing(r.id);setForm({truckId:r.truckId,category:r.category,description:r.description,amount:r.amount,odometer:r.odometer,date:r.date,nextDueOdometer:r.nextDueOdometer??0,nextDueDate:r.nextDueDate??''});setError('');setOpen(true)}
  async function save(e:React.FormEvent){e.preventDefault();if(!db||!form.truckId){setError('Select a truck.');return}if(!form.description.trim()||Number(form.amount)<0||Number(form.odometer)<0){setError('Description, amount and odometer are required.');return}try{const data={...form,amount:Number(form.amount)||0,odometer:Number(form.odometer)||0,nextDueOdometer:Number(form.nextDueOdometer)||null,nextDueDate:form.nextDueDate||null,updatedAt:new Date().toISOString()};if(editing)await updateDoc(doc(db,'maintenanceRecords',editing),data);else await addDoc(collection(db,'maintenanceRecords'),{...data,createdAt:new Date().toISOString()});setOpen(false);setEditing(null)}catch{setError('Could not save maintenance record. Check your permissions.')}}

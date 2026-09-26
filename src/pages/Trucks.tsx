@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, deleteDoc, doc, getDoc, onSnapshot, query, where, writeBatch } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, query, where, writeBatch } from 'firebase/firestore'
 import { Plus, Truck as TruckIcon, X, Pencil, Trash2 } from 'lucide-react'
 import { auth, db } from '../lib/firebase'
 
@@ -27,7 +27,7 @@ const emptyTruck = {
   make: 'TATA',
   model: '1518',
   driverId: '',
-  status: 'active' as const,
+  status: 'active' as TruckRecord['status'],
   currentOdometer: 0,
   notes: ''
 }
@@ -168,6 +168,15 @@ export default function Trucks() {
   async function remove(id: string) {
     if (!db || !confirm('Delete this truck record?')) return
     try {
+      const [deliverySnap, fuelSnap, maintenanceSnap] = await Promise.all([
+        getDocs(query(collection(db, 'deliveries'), where('truckId', '==', id), limit(1))),
+        getDocs(query(collection(db, 'fuelRecords'), where('truckId', '==', id), limit(1))),
+        getDocs(query(collection(db, 'maintenanceRecords'), where('truckId', '==', id), limit(1)))
+      ])
+      if (!deliverySnap.empty || !fuelSnap.empty || !maintenanceSnap.empty) {
+        setError('This truck has delivery, fuel or maintenance history and cannot be deleted. Set its status to inactive instead.')
+        return
+      }
       await deleteDoc(doc(db, 'trucks', id))
     } catch {
       setError('Only an owner can delete a truck.')

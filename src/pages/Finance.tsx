@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { BarChart3, Plus, Wallet, TrendingDown, TrendingUp, Clock, Fuel } from 'lucide-react'
 import { db, auth } from '../lib/firebase'
+import { estimatedProfit, operatingCosts, outstandingBalance, sumFuelCost, sumManualExpenses, sumReceived, sumRevenue } from '../lib/finance'
 
 type Expense = { id:string; truckId?:string; category:string; amount:number; description?:string; date:string; createdBy?:string }
 type Delivery = { id:string; price:number; amountPaid:number; paymentStatus:'unpaid'|'partial'|'paid'; orderDate:string; customerName?:string }
@@ -20,7 +21,7 @@ export default function Finance(){
   onSnapshot(collection(db,'fuelRecords'),s=>setFuel(s.docs.map(d=>({id:d.id,...d.data()} as FuelRecord))),()=>setError('Unable to load fuel costs.')),
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.'))]
  return()=>u.forEach(x=>x())},[isOwner])
- const totals=useMemo(()=>{const revenue=deliveries.reduce((s,d)=>s+Math.max(0,Number(d.price)||0),0);const received=deliveries.reduce((s,d)=>s+Math.max(0,Number(d.amountPaid)||0),0);const manualExpenses=expenses.reduce((s,e)=>s+(e.category==='Fuel'?0:Math.max(0,Number(e.amount)||0)),0);const fuelCost=fuel.reduce((s,f)=>s+Math.max(0,Number(f.amount)||0),0);const expensesTotal=manualExpenses+fuelCost;return{revenue,received,outstanding:Math.max(0,revenue-received),expensesTotal,fuelCost,profit:revenue-expensesTotal}},[deliveries,expenses,fuel])
+ const totals=useMemo(()=>{const revenue=sumRevenue(deliveries);const received=sumReceived(deliveries);const manualExpenses=sumManualExpenses(expenses);const fuelCost=sumFuelCost(fuel);const expensesTotal=operatingCosts(manualExpenses,fuelCost);return{revenue,received,outstanding:outstandingBalance(revenue,received),expensesTotal,fuelCost,profit:estimatedProfit(revenue,expensesTotal)}},[deliveries,expenses,fuel])
  const money=(v:number)=>'R'+v.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})
  async function saveExpense(e:React.FormEvent){e.preventDefault();if(!db||!auth?.currentUser){setError('Firebase is not configured.');return}const amount=Math.max(0,Number(form.amount)||0);if(amount<=0||!form.description.trim()||!form.date){setError('Amount, description and date are required.');return}try{await addDoc(collection(db,'expenses'),{category:form.category,amount,description:form.description.trim(),date:form.date,truckId:form.truckId||null,createdBy:auth.currentUser.uid,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});setForm({category:'Maintenance',amount:0,description:'',date:new Date().toISOString().slice(0,10),truckId:''});setOpen(false);setError('')}catch{setError('Could not save the expense. Check your permissions.')}}
  if(isOwner===null)return <section className="page-section"><div className="page-card"><p className="muted">Checking finance access…</p></div></section>

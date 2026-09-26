@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { BarChart3, Fuel, Package, Wallet } from 'lucide-react'
 import { auth, db } from '../lib/firebase'
+import { estimatedProfit, isValidDateRange, operatingCosts, outstandingBalance, sumFuelCost, sumManualExpenses, sumReceived, sumRevenue } from '../lib/finance'
 
 type Delivery={id:string;truckId?:string;price?:number;amountPaid?:number;orderDate?:string;customerName?:string}
 type Expense={id:string;truckId?:string;category?:string;amount?:number;date?:string}
@@ -22,12 +23,12 @@ export default function Reports(){
   onSnapshot(collection(db,'fuelRecords'),s=>setFuel(s.docs.map(d=>({id:d.id,...d.data()} as FuelRecord))),()=>setError('Unable to load fuel records.')),
   onSnapshot(collection(db,'trucks'),s=>setTrucks(s.docs.map(d=>({id:d.id,...d.data()} as Truck))),()=>setError('Unable to load trucks.'))
  ];return()=>u.forEach(x=>x())},[owner])
- const validRange=from<=to
+ const validRange=isValidDateRange(from,to)
  const inRange=(date?:string)=>validRange&&!!date&&date>=from&&date<=to
  const filtered=useMemo(()=>({deliveries:deliveries.filter(d=>inRange(d.orderDate)),expenses:expenses.filter(e=>inRange(e.date)),fuel:fuel.filter(f=>inRange(f.date))}),[deliveries,expenses,fuel,from,to])
- const totals=useMemo(()=>{const revenue=filtered.deliveries.reduce((s,d)=>s+Math.max(0,Number(d.price)||0),0);const received=filtered.deliveries.reduce((s,d)=>s+Math.max(0,Number(d.amountPaid)||0),0);const manualExpenses=filtered.expenses.reduce((s,e)=>s+(e.category==='Fuel'?0:Math.max(0,Number(e.amount)||0)),0);const fuelCost=filtered.fuel.reduce((s,f)=>s+Math.max(0,Number(f.amount)||0),0);const expenseTotal=manualExpenses+fuelCost;const fuelLitres=filtered.fuel.reduce((s,f)=>s+Math.max(0,Number(f.litres)||0),0);return{revenue,received,outstanding:Math.max(0,revenue-received),expenseTotal,fuelLitres,fuelCost,profit:revenue-expenseTotal}},[filtered])
+ const totals=useMemo(()=>{const revenue=sumRevenue(filtered.deliveries);const received=sumReceived(filtered.deliveries);const manualExpenses=sumManualExpenses(filtered.expenses);const fuelCost=sumFuelCost(filtered.fuel);const expenseTotal=operatingCosts(manualExpenses,fuelCost);const fuelLitres=filtered.fuel.reduce((s,f)=>s+Math.max(0,Number(f.litres)||0),0);return{revenue,received,outstanding:outstandingBalance(revenue,received),expenseTotal,fuelLitres,fuelCost,profit:estimatedProfit(revenue,expenseTotal)}},[filtered])
  const categoryTotals=useMemo(()=>Object.entries(filtered.expenses.filter(e=>e.category!=='Fuel').reduce<Record<string,number>>((a,e)=>{const k=e.category||'Other';a[k]=(a[k]||0)+Math.max(0,Number(e.amount)||0);return a},{})).sort((a,b)=>b[1]-a[1]),[filtered.expenses])
- const truckTotals=useMemo(()=>trucks.map(t=>{const ds=filtered.deliveries.filter(d=>d.truckId===t.id);const es=filtered.expenses.filter(e=>e.truckId===t.id&&e.category!=='Fuel');const revenue=ds.reduce((s,d)=>s+Math.max(0,Number(d.price)||0),0);const expenseCosts=es.reduce((s,e)=>s+Math.max(0,Number(e.amount)||0),0);const fuelCosts=filtered.fuel.filter(x=>x.truckId===t.id).reduce((s,x)=>s+Math.max(0,Number(x.amount)||0),0);const costs=expenseCosts+fuelCosts;return{...t,deliveries:ds.length,revenue,costs,profit:revenue-costs}}).sort((a,b)=>b.revenue-a.revenue),[trucks,filtered])
+ const truckTotals=useMemo(()=>trucks.map(t=>{const ds=filtered.deliveries.filter(d=>d.truckId===t.id);const es=filtered.expenses.filter(e=>e.truckId===t.id);const revenue=sumRevenue(ds);const expenseCosts=sumManualExpenses(es);const fuelCosts=sumFuelCost(filtered.fuel.filter(x=>x.truckId===t.id));const costs=operatingCosts(expenseCosts,fuelCosts);return{...t,deliveries:ds.length,revenue,costs,profit:estimatedProfit(revenue,costs)}}).sort((a,b)=>b.revenue-a.revenue),[trucks,filtered])
  if(owner===null)return <section className="page-section"><div className="page-card"><p className="muted">Checking report access…</p></div></section>
  if(!owner)return <section className="page-section"><div className="page-card access-card"><BarChart3 size={30}/><p className="eyebrow">Owner only</p><h2>Reports are private</h2><p className="muted">Financial and truck profitability reports are available to the business owner.</p></div></section>
  const maxCategory=categoryTotals[0]?.[1]||1
