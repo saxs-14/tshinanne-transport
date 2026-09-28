@@ -220,7 +220,22 @@ Create the driver's Authentication account and matching users/{uid} document wit
 - active = true
 - assignedTruckId = the correct truck ID
 
-**Status:** Not completed with live production accounts.
+**Status: DONE, with placeholder identity — 2026-09-28.** Both accounts exist in the live
+project (Authentication users list + matching Firestore `users/{uid}` documents, verified field
+by field):
+
+- Owner UID `aBALzkga0Afw9dNRp4DtvYNOTBk2` — email `owner@tshinanne-transport.local`,
+  displayName "Tshinanne Mamagau", role `owner`, active `true`, assignedTruckId `null`.
+- Driver UID `ZXvR3X6vfYTZmrbpjQtHXayrpti1` — email `driver@tshinanne-transport.local`,
+  displayName "Driver" (placeholder — real name not supplied), role `driver`, active `true`,
+  assignedTruckId set to the truck below.
+
+The emails, passwords and driver display name are intentionally **not real** — the business
+owner asked for placeholder accounts to be created now and corrected later. To fix: open
+[Authentication → Users](https://console.firebase.google.com/project/tshinanne-transport/authentication/users)
+to change an email or reset a password; open
+[Firestore → users collection](https://console.firebase.google.com/project/tshinanne-transport/firestore/databases/-default-/data/~2Fusers)
+to correct `displayName`/`phone`. There is no in-app screen for this (see Section 4 below).
 
 ### C. Real truck data — REQUIRED
 
@@ -230,7 +245,19 @@ Enter the actual two TATA 1518 vehicles:
 - Correct driver assignment
 - Correct active/inactive status
 
-**Status:** Application supports this, but real business data has not been entered.
+**Status: Placeholder records created — 2026-09-28.** Two `trucks` documents exist, correctly
+cross-linked per Section B above and the launch checklist:
+
+- `Wp8ZfpcyFBBkmjNOJ8AF` — registrationNumber `PENDING-1`, driverId `null` (the owner's truck —
+  no driver-role account is assigned to it, matching how the app treats owner-driven trucks).
+- `x0deOXq4gSde5mtYclX4` — registrationNumber `PENDING-2`, driverId set to the driver's UID
+  above, and the driver's `assignedTruckId` points back to this document — the two-way link
+  the Firestore rules and app logic expect.
+
+Both have `currentOdometer: 0` and `status: "active"`. **Real registration numbers and
+odometers were not invented** (per explicit instruction) — edit these two documents in
+[Firestore console](https://console.firebase.google.com/project/tshinanne-transport/firestore/databases/-default-/data/~2Ftrucks)
+once the real values are available, or ask Claude to do it.
 
 ### D. Production deployment — REQUIRED
 
@@ -339,6 +366,10 @@ These are improvements rather than blockers for the core MVP:
 6. Add offline persistence and synchronization if poor connectivity becomes a real operational problem.
 7. Add secure backend/admin tooling for user provisioning.
 8. Add automated invoice/quote generation if the business requires formal documents.
+9. There is no in-app screen for editing a user's own `displayName`/`phone`, even though
+   Firestore rules already allow it (`users/{uid}` update, self-only, those two fields). Right
+   now the only way to correct the placeholder owner/driver names is via the Firestore console
+   directly. Worth a small settings screen if this comes up often.
 
 ---
 
