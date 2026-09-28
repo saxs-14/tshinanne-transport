@@ -97,7 +97,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
 
 .auth-page { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(circle at top, #ffffff 0%, var(--color-bg) 65%); }
 .auth-card { width: min(420px, 100%); background: var(--color-surface); padding: 28px; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); }
-.auth-logo { width: 58px; height: 58px; display: grid; place-items: center; border-radius: var(--radius-lg); background: var(--color-primary); color: var(--color-on-primary); margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+.auth-brand-logo { display: block; width: min(240px, 100%); height: auto; margin: 0 auto 22px; }
 .auth-card h1 { margin: 5px 0 8px; font-size: 30px; }
 .auth-card form { display: grid; gap: 14px; margin-top: 22px; }
 .auth-card label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
