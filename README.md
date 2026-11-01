@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/assets/banner.svg" width="100%" alt="Tshinanne Transport banner"/></p>
+
 # Tshinanne Transport 🚛
 
 A mobile-first fleet and business management system for Tshinanne Transport, a local sand-delivery business operating around Thohoyandou, Limpopo.
